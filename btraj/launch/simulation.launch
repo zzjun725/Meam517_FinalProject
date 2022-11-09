@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="btraj" type="btraj_main" name="btraj_main" output="screen">
+  </node>
+
+</launch>
