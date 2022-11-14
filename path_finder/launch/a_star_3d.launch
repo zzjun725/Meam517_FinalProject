@@ -1,0 +1,76 @@
+<launch>
+
+  <arg name="map_frame_id" default="map"/>
+  <arg name="map_size_x" default="20.0"/>
+  <arg name="map_size_y" default="20.0"/>
+  <arg name="map_size_z" default="10.0"/>
+  <arg name="start_x" default="0.5"/>
+  <arg name="start_y" default="0.5"/>
+  <arg name="start_z" default="0.5"/>
+  <arg name="resolution" default="0.2"/>
+
+  <arg name="max_inflate_iter" default="20"/>
+  <arg name="step_length" default="5"/>
+
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find path_finder)/rviz/display_astar_3d.rviz"/>
+  <node pkg="path_finder" name ="astar_3d" type ="astar_3d" output = "screen">
+    <!-- this is the map init position, not the odom-->
+
+    <param name="map/x_size"     value="$(arg map_size_x)" />
+    <param name="map/y_size"     value="$(arg map_size_y)" />
+    <param name="map/z_size"     value="$(arg map_size_z)" />
+    <param name="planning/start_x"     value="$(arg start_x)" />
+    <param name="planning/start_y"     value="$(arg start_y)" />
+    <param name="planning/start_z"     value="$(arg start_z)" />
+
+    <param name="map/resolution" value="$(arg resolution)"/>
+    <param name="map/frame_id"     value="$(arg map_frame_id)" />
+  </node>
+
+<!--  <node pkg="path_finder" name ="map_tool" type ="map_tool" output = "screen">-->
+<!--    &lt;!&ndash; this is the map init position, not the odom&ndash;&gt;-->
+
+<!--    <param name="map/x_size"     value="$(arg map_size_x)" />-->
+<!--    <param name="map/y_size"     value="$(arg map_size_y)" />-->
+<!--    <param name="map/z_size"     value="$(arg map_size_z)" />-->
+<!--    <param name="planning/start_x"     value="$(arg start_x)" />-->
+<!--    <param name="planning/start_y"     value="$(arg start_y)" />-->
+<!--    <param name="planning/start_z"     value="$(arg start_z)" />-->
+
+<!--    <param name="map/resolution" value="0.2"/>-->
+<!--    <param name="map/frame_id"     value="$(arg map_frame_id)" />-->
+<!--  </node>-->
+
+
+  <node pkg="path_finder" name ="btraj" type ="btraj" output = "screen">
+    <!-- this is the map init position, not the odom-->
+
+    <param name="map/x_size"     value="$(arg map_size_x)" />
+    <param name="map/y_size"     value="$(arg map_size_y)" />
+    <param name="map/z_size"     value="$(arg map_size_z)" />
+    <param name="planning/start_x"     value="$(arg start_x)" />
+    <param name="planning/start_y"     value="$(arg start_y)" />
+    <param name="planning/start_z"     value="$(arg start_z)" />
+
+    <param name="map/resolution" value="$(arg resolution)"/>
+    <param name="map/frame_id"     value="$(arg map_frame_id)" />
+
+    <param name="btraj/max_inflate_iter"     value="$(arg max_inflate_iter)" />
+    <param name="btraj/step_length"     value="$(arg step_length)" />
+
+  </node>
+<!--      --><!-- total obstacle ratios -->
+<!--     <param name="map/cylinder_ratio" value="0.10" type="double"/> -->
+<!--     <param name="map/circle_ratio"   value="0.02" type="double"/> -->
+<!--     <param name="map/gate_ratio"     value="0.02" type="double"/> -->
+<!--     <param name="map/ellip_ratio"    value="0.02" type="double"/> -->
+<!--     <param name="map/poly_ratio"     value="0.01" type="double"/> -->
+
+<!--     <param name="params/w1" value="0.1"/> -->
+<!--     <param name="params/w2" value="0.8"/>           -->
+<!--     <param name="params/w3" value="1.2"/> -->
+<!--     <param name="params/w4" value="3.0"/> -->
+
+
+</launch>
