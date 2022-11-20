@@ -70,7 +70,8 @@ set(SOURCE_FILES
 #  src/aerialmap_display.cpp   
 #  src/multi_probmap_display.cpp  
   ${MOC_FILES}
-        ../btraj/include/btraj/InflateCube.h ../btraj/src/InflateCube.cpp)
+#  ../btraj/include/btraj/InflateCube.h ../btraj/src/InflateCube.cpp
+  )
 
 
 ## Specify additional locations of header files

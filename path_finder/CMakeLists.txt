@@ -15,11 +15,10 @@ find_package(catkin REQUIRED COMPONENTS
         nav_msgs
         tf
         pcl_conversions
-        qpoases
         )
 find_package(PCL 1.7 REQUIRED)
 find_package(Eigen3 REQUIRED)
-# find_package(Glog REQUIRED)
+find_package(Glog REQUIRED)
 include(cmake/Findglog.cmake)
 
 catkin_package()

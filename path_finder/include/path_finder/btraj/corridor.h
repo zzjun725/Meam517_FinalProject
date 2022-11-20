@@ -6,7 +6,6 @@
 #define SRC_CORRIDOR_H
 
 #include <Eigen/Eigen>
-#include "qpOASES.hpp"
 #include "path_finder/map_tools/grid_node.h"
 #include "path_finder/map_tools/map_tool.h"
 #include "path_finder/utils/type.h"
@@ -16,7 +15,6 @@
 
 using namespace std;
 using namespace Eigen;
-using namespace qpOASES;
 
 class CubeCorridor
 {
@@ -42,15 +40,6 @@ private:
     //inflate
     int _max_inflate_iter;
     int _step_length;
-
-
-    // for solve QP
-    vector<MatrixXd> MQM_list;
-    MatrixXd Aeq;
-    MatrixXd Beq;
-    MatrixXd Aieq;
-    MatrixXd uBieq;
-    MatrixXd lBieq;
 
     // for time allocation
     vector<double> times;
