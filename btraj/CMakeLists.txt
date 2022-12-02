@@ -12,9 +12,9 @@ find_package(Eigen3 REQUIRED)
 
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 
-catkin_package(
-  INCLUDE_DIRS include
-)
+# catkin_package(
+#   INCLUDE_DIRS include
+# )
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
