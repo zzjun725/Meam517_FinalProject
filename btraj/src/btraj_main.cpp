@@ -1,10 +1,12 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
 #include <Eigen/Dense>
 #include "OsqpEigen/OsqpEigen.h"
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -14,6 +16,9 @@ using namespace Eigen;
 
 // subscriber
 ros::Subscriber corridorSub, targetSub;
+
+// publisher
+ros::Publisher trajPub;
 
 // parameters
 int numSegments;
@@ -196,8 +201,7 @@ MatrixXd getM(int order) {
 
 // get Q matrix for the objective function
 MatrixXd getQ(int order){
-    MatrixXd Q;
-    Q.resize(order + 1, order + 1);
+    MatrixXd Q = MatrixXd::Zero(order + 1, order + 1);
 
     for (int i = 3; i < order + 1; i++) {
         for (int j = 3; j < order + 1; j++) {
@@ -209,7 +213,7 @@ MatrixXd getQ(int order){
 }
 
 // get waypoint and continuity constraints
-int getWaypointAndContinuityConstraints(int dim, int numSegments, int order, int startRow, vector<double> scales, SparseMatrix<double>& linearMatrix, VectorXd& lowerBound, VectorXd& upperBound) {
+int getWaypointAndContinuityConstraints(int dim, int numSegments, int order, int startRow, SparseMatrix<double>& linearMatrix, VectorXd& lowerBound, VectorXd& upperBound) {
     int rowIdx = startRow;
     // start position
     // position
@@ -254,7 +258,7 @@ int getWaypointAndContinuityConstraints(int dim, int numSegments, int order, int
     lowerBound(rowIdx) = targetConstraint[dim][2];
     upperBound(rowIdx) = targetConstraint[dim][2];
     rowIdx++;
-
+    
     // mid positions
     for (int i = 0; i < numSegments - 1; i++) {
         // position
@@ -289,14 +293,14 @@ int getWaypointAndContinuityConstraints(int dim, int numSegments, int order, int
 }
 
 // get safety constraints
-int getSafetyConstraints(int dim, int numSegments, int order, int startRow, vector<double> scales, SparseMatrix<double>& linearMatrix, VectorXd& lowerBound, VectorXd& upperBound) {
+int getSafetyConstraints(int dim, int numSegments, int order, int startRow, SparseMatrix<double>& linearMatrix, VectorXd& lowerBound, VectorXd& upperBound) {
     int rowIdx = startRow;
 
     for (int i = 0; i < numSegments; i++) {
         for (int j = 0; j < order + 1; j++) {
             linearMatrix.insert(rowIdx, i * (order + 1) + j) = 1.0;
-            lowerBound(rowIdx) = lowerBoundary[dim][i];
-            upperBound(rowIdx) = upperBoundary[dim][i];
+            lowerBound(rowIdx) = lowerBoundary[dim][i] / scales[i];
+            upperBound(rowIdx) = upperBoundary[dim][i] / scales[i];
             rowIdx++;
         }
     }
@@ -305,7 +309,7 @@ int getSafetyConstraints(int dim, int numSegments, int order, int startRow, vect
 }
 
 // get dynamical feasibility constraints
-int getDynamicalFeasibilityConstraints(int numSegments, int order, int startRow, vector<double> scales, SparseMatrix<double>& linearMatrix, VectorXd& lowerBound, VectorXd& upperBound) {
+int getDynamicalFeasibilityConstraints(int numSegments, int order, int startRow, SparseMatrix<double>& linearMatrix, VectorXd& lowerBound, VectorXd& upperBound) {
     int rowIdx = startRow;
 
     for (int i = 0; i < numSegments; i++) {
@@ -339,7 +343,7 @@ void calculateScales() {
     vector<Vector3d> points;
     points.emplace_back(startConstraint[0][0], startConstraint[1][0], startConstraint[2][0]);
 
-    for(int i = 1; i < (int)savedCorridors.markers.size(); i++) {
+    for (int i = 1; i < (int)savedCorridors.markers.size(); i++) {
         const auto& box = savedCorridors.markers[i];
         points.emplace_back(box.pose.position.x, box.pose.position.y, box.pose.position.z);
     }
@@ -350,7 +354,7 @@ void calculateScales() {
     double _Acc = maxAcc * 0.6;
 
     for (int k = 0; k < (int)points.size() - 1; k++)
-    {
+    {   
         double dtxyz;
         Vector3d p0   = points[k];        
         Vector3d p1   = points[k + 1];    
@@ -392,20 +396,80 @@ void calculateScales() {
     }
 }
 
-int solve() {
-    cout << "enter solve" << endl;
+int factorial(int n) {
+    return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
+}
 
+void visualize() {
+    visualization_msgs::Marker line_strip;
+    line_strip.header.frame_id = "map";
+    line_strip.header.stamp = ros::Time::now();
+    line_strip.ns = "points_and_lines";
+    line_strip.action = visualization_msgs::Marker::ADD;
+    line_strip.pose.orientation.w = 1.0;
+
+    line_strip.id = 1;
+    line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+    line_strip.scale.x = 0.1;
+    // Line strip is blue
+    line_strip.color.b = 1.0;
+    line_strip.color.a = 1.0;
+
+    // Create the vertices for the lines
+    double total_time = 0.0;
+    for (int i = 0; i < numSegments; i++) {
+        vector<double> ts(1000, 0);
+        for (int j = 0; j < 1000; j++) {
+            ts[j] = total_time + scales[i] / 1000 * j;
+        }
+        vector<vector<double>> fs(3, vector<double>(1000, 0));
+        for (int d = 0; d < 3; d++) {
+            for (int o = 0; o < order + 1; o++) {
+                for (int j = 0; j < 1000; j++) {
+                    fs[d][j] += scales[i] * trajControlPoints[d](i * (order + 1) + o) * factorial(order) / factorial(o) / factorial(order - o) * pow((ts[j] - total_time) / scales[i], o) * pow(1 - (ts[j] - total_time) / scales[i] , order - o);
+                }
+            }
+
+        }
+
+        total_time += scales[i];
+        
+        for (int j = 0; j < 1000; j++) {
+            geometry_msgs::Point p;
+            p.x = fs[0][j];
+            p.y = fs[1][j];
+            p.z = fs[2][j];
+            line_strip.points.push_back(p);
+        }
+    }
+
+    trajPub.publish(line_strip);
+}
+
+int solve() {
     // calculate scales
     calculateScales();
 
-    cout << "enter cost" << endl;
+    // cout << "goal" << targetConstraint[0][0] << ' ' << targetConstraint[1][0] << ' ' << targetConstraint[2][0] << endl;
+
+    // for (double ele : scales) {
+    //     cout << ele << ' ';
+    // }
+    // cout << endl;
+
+    // for (int i = 0; i < numSegments; i++) {
+    //     cout << "lb:" << endl;
+    //     cout << lowerBoundary[0][i] << ", " << lowerBoundary[1][i] << ", " << lowerBoundary[2][i] << endl;
+    //     cout << "ub:" << endl;
+    //     cout << upperBoundary[0][i] << ", " << upperBoundary[1][i] << ", " << upperBoundary[2][i] << endl;
+    // }
 
     // cost part
     MatrixXd Q = getQ(order);
     MatrixXd M = getM(order);
     MatrixXd Q0 = M.transpose() * Q * M;
 
-    cout << "Q:" << Q << endl;
+    // cout << "Q:" << Q << endl;
     
     // find closest PSD Qhat
     MatrixXd B = (Q0 + Q0.transpose()) / 2;
@@ -432,11 +496,11 @@ int solve() {
         lowerBound.resize(totalConstraintNum);
         upperBound.resize(totalConstraintNum);
 
-        int startRow = getWaypointAndContinuityConstraints(dim, numSegments, order, 0, scales, linearMatrix, lowerBound, upperBound);
+        int startRow = getWaypointAndContinuityConstraints(dim, numSegments, order, 0, linearMatrix, lowerBound, upperBound);
 
-        startRow = getSafetyConstraints(dim, numSegments, order, startRow, scales, linearMatrix, lowerBound, upperBound);
+        startRow = getSafetyConstraints(dim, numSegments, order, startRow, linearMatrix, lowerBound, upperBound);
 
-        startRow = getDynamicalFeasibilityConstraints(numSegments, order, startRow, scales, linearMatrix, lowerBound, upperBound);
+        startRow = getDynamicalFeasibilityConstraints(numSegments, order, startRow, linearMatrix, lowerBound, upperBound);
 
         // solve x, y, z separately with 3 optimization problems
         // instantiate the solver
@@ -464,14 +528,16 @@ int solve() {
         // solve the QP problem
         if(solver.solveProblem() != OsqpEigen::ErrorExitFlag::NoError) return 1;
 
+        if(solver.getStatus() != OsqpEigen::Status::Solved) return 1;
+
         // get the controller input
         controlPoints = solver.getSolution();
 
         trajControlPoints[dim] = controlPoints;
 
-        cout << "dim: " << dim << endl;
-        cout << controlPoints << endl;
-        cout << endl;
+        // cout << "dim: " << dim << endl;
+        // cout << controlPoints << endl;
+        // cout << endl;
     }
 
     ofstream myfile;
@@ -482,13 +548,15 @@ int solve() {
     }
     myfile.close();
 
+    visualize();
+
     return 0;
 }
 
 void rcvCorridorsCallBack(const visualization_msgs::MarkerArray& corridors) {
     if (corridors.markers.size() == 0)
         return;
-        
+
     savedCorridors = corridors;
 
     numSegments = corridors.markers.size();
@@ -530,7 +598,7 @@ void rcvCorridorsCallBack(const visualization_msgs::MarkerArray& corridors) {
 void rcvTargetCallback(const geometry_msgs::PoseStamped& target) {     
     targetConstraint[0][0] = target.pose.position.x;
     targetConstraint[1][0] = target.pose.position.y;
-    targetConstraint[1][0] = target.pose.position.z;
+    targetConstraint[2][0] = target.pose.position.z;
     targetRcv = true;
 
     if (corridorRcv && targetRcv) {
@@ -553,15 +621,8 @@ int main(int argc, char** argv)
     targetSub = nh.subscribe("/goal", 1, rcvTargetCallback);
 
     // publisher
-
-
-    // initialization
-
-    // targetConstraint[0][0] = 1.0;
-    // targetConstraint[1][0] = 1.0;
-    // targetConstraint[2][0] = 1.0;
-
-    // int error = solve();
+    trajPub = nh.advertise<visualization_msgs::Marker>("curve", 10);
+    
     sleep(1);
     ros::spin();
     

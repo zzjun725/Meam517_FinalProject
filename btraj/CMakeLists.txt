@@ -3,6 +3,8 @@ project(btraj)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  geometry_msgs
+  visualization_msgs
 )
 
 find_package(OsqpEigen REQUIRED)
