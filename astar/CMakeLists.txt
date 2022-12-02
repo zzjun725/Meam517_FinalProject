@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(a_star)
+project(astar)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -28,6 +28,8 @@ catkin_package(
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/third_party/sdf_tools/include)
+
 include_directories(
     include 
     SYSTEM 
@@ -40,8 +42,8 @@ include_directories(
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS} -O3 -Wall") # -Wextra -Werror
 
 add_executable(
-    a_star
+    astar_node
     src/astar.cpp
-    src/planner.cpp
+    src/astar_node.cpp
 )
-target_link_libraries(a_star ${catkin_LIBRARIES} sdf_tools ${PCL_LIBRARIES})
+target_link_libraries(astar_node ${catkin_LIBRARIES} sdf_tools ${PCL_LIBRARIES})

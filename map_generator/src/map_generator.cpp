@@ -66,7 +66,7 @@ main(int argc, char** argv)
   ros::NodeHandle nh_private("~");
 
   ros::Publisher pcl_pub =
-    nh.advertise<sensor_msgs::PointCloud2>("mock_map", 1);
+    nh.advertise<sensor_msgs::PointCloud2>("map", 1);
   pcl::PointCloud<pcl::PointXYZ> cloud;
   sensor_msgs::PointCloud2       output;
   // Fill in the cloud data

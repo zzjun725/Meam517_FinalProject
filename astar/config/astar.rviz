@@ -137,7 +137,7 @@ Visualization Manager:
       Size (Pixels): 5
       Size (m): 0.200000003
       Style: Boxes
-      Topic: /b_traj_node/vis_map_inflate
+      Topic: /astar_node/vis_map_inflate
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -167,7 +167,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.200000003
       Style: Boxes
-      Topic: /b_traj_node/vis_map_local
+      Topic: /astar_node/vis_map_local
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -182,7 +182,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /b_traj_node/corridor_vis
+      Marker Topic: /astar_node/corridor_vis
       Name: Corridor
       Namespaces:
         corridor: true
@@ -190,7 +190,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /b_traj_node/check_trajectory
+      Marker Topic: /astar_node/check_trajectory
       Name: CheckTraj
       Namespaces:
         trajectory/check_trajectory: true
@@ -198,7 +198,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /b_traj_node/path_vis
+      Marker Topic: /astar_node/path_vis
       Name: Path
       Namespaces:
         b_traj/fast_marching_path: true
@@ -206,7 +206,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /b_traj_node/trajectory_vis
+      Marker Topic: /astar_node/trajectory_vis
       Name: Trajectory
       Namespaces:
         trajectory/trajectory: true
@@ -214,7 +214,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /b_traj_node/stop_trajectory
+      Marker Topic: /astar_node/stop_trajectory
       Name: StopTraj
       Namespaces:
         trajectory/stop_trajectory: true
@@ -222,7 +222,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /b_traj_node/expanded_nodes_vis
+      Marker Topic: /astar_node/expanded_nodes_vis
       Name: ExpNodes
       Namespaces:
         {}
@@ -230,7 +230,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /b_traj_node/grid_path_vis
+      Marker Topic: /astar_node/grid_path_vis
       Name: GridPath
       Namespaces:
         {}
