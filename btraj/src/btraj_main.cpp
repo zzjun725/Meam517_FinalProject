@@ -553,6 +553,19 @@ int solve() {
     return 0;
 }
 
+// check if the goal is in the last corridor
+int checkMatch() {
+    for (int i = 0; i < 3; i++) {
+        cout << "match:" << targetConstraint[i][0] << ' ' << lowerBoundary[i].back() << ' ' << upperBoundary[i].back() << endl; 
+        if (targetConstraint[i][0] < lowerBoundary[i].back() || targetConstraint[i][0] > upperBoundary[i].back()) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+// receive corridors
 void rcvCorridorsCallBack(const visualization_msgs::MarkerArray& corridors) {
     if (corridors.markers.size() == 0)
         return;
@@ -574,6 +587,9 @@ void rcvCorridorsCallBack(const visualization_msgs::MarkerArray& corridors) {
     for (int i = 0; i < numSegments; i++) {
         const auto& box = corridors.markers[i];
 
+        if (box.action == visualization_msgs::Marker::DELETE)
+            return;
+
         lowerBoundary[0][i] = box.pose.position.x - box.scale.x / 2.0;
         lowerBoundary[1][i] = box.pose.position.y - box.scale.y / 2.0;
         lowerBoundary[2][i] = box.pose.position.z - box.scale.z / 2.0;
@@ -586,15 +602,24 @@ void rcvCorridorsCallBack(const visualization_msgs::MarkerArray& corridors) {
     corridorRcv = true;
 
     if (corridorRcv && targetRcv) {
-        int error = solve();
+        // int matchError = checkMatch();
+        // if (matchError) {
+        //     corridorRcv = false;
+        //     targetRcv = false;
+        //     ROS_WARN("Corridor and Goal don't match!");
+        //     return;
+        // }
+
+        int solveError = solve();
         corridorRcv = false;
         targetRcv = false;
-        if (error) {
+        if (solveError) {
             ROS_WARN("Btraj failed!");
         }
     }
 }
 
+// receive goal
 void rcvTargetCallback(const geometry_msgs::PoseStamped& target) {     
     targetConstraint[0][0] = target.pose.position.x;
     targetConstraint[1][0] = target.pose.position.y;
@@ -602,10 +627,18 @@ void rcvTargetCallback(const geometry_msgs::PoseStamped& target) {
     targetRcv = true;
 
     if (corridorRcv && targetRcv) {
-        int error = solve();
+        // int matchError = checkMatch();
+        // if (matchError) {
+        //     corridorRcv = false;
+        //     targetRcv = false;
+        //     ROS_WARN("Corridor and goal don't match!");
+        //     return;
+        // }
+
+        int solveError = solve();
         corridorRcv = false;
         targetRcv = false;
-        if (error) {
+        if (solveError) {
             ROS_WARN("Btraj failed!");
         }
     }
